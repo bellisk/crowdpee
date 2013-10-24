@@ -3,12 +3,19 @@ from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler, Stream, API
 from tweepy.utils import import_simplejson, parse_datetime
 from tweepy.models import Model
-json = import_simplejson()
+import_simplejson()
 import argparse
 import os
 import sys
 import itertools
 import datetime
+import json
+
+with open("gwb.json", 'r') as f:
+    betriebe = json.load(f)['features']
+
+def closest(lng, lat):
+    return sorted(betriebe, key=lambda b: (b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat))[0]
 
 class Event(Model):
     @classmethod
@@ -34,7 +41,7 @@ class Event(Model):
         return event
 
 class LessListener(StreamListener):
-    TIMEOUT = datetime.timedelta(seconds=120)
+    TIMEOUT = datetime.timedelta(seconds=300)
 
     def __init__(self, api):
         StreamListener.__init__(self, api)
@@ -46,7 +53,17 @@ class LessListener(StreamListener):
         print "streaming as @%s (#%d)" % (me.screen_name, me.id)
 
     def on_status(self, status):
-        print status.text
+        if status.place:
+            lng, lat = status.place.bounding_box.origin()
+            b = closest(lng, lat)
+            dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
+            if dist <= 0.005:
+                print status.text
+                print status.place.bounding_box.origin()
+                print b['properties']['Betriebsname']
+                print dist
+                print
+                print
 
 if __name__ == '__main__':
     consumer_key = os.environ["CONSUMER_KEY"]
@@ -62,4 +79,5 @@ if __name__ == '__main__':
     l = LessListener(api)
 
     stream = Stream(auth, l)
-    stream.filter(track=['less'])
+    # CH: [5.47, 45.37, 10.65, 47.96]
+    stream.filter(locations=[8.41, 47.31, 8.62, 47.48])
