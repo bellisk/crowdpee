@@ -1,4 +1,5 @@
 # coding=utf-8
+DEBUG = True
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler, Stream, API
 from tweepy.utils import import_simplejson, parse_datetime
@@ -6,13 +7,26 @@ from tweepy.models import Model
 import_simplejson()
 import argparse
 import os
-import sys
 import itertools
 import datetime
-import json
+from django.core.management import setup_environ
+import nearbysources.settings as settings
+import sys, json
 
-with open("gwb.json", 'r') as f:
-    betriebe = json.load(f)['features']
+if __name__ == "__main__":
+    setup_environ(settings)
+
+from nearbysources.questions.models import *
+
+questionnaire = Questionnaire.objects.get(name=sys.argv[1])
+tweet = QuestionnaireTweet.objects.get(questionnaire=questionnaire, language=Language.objects.get(code="en")).text
+
+betriebe = []
+for loi in LocationOfInterest.objects.filter(campaign=questionnaire.campaign):
+    betriebe.append({"name": loi.name, "geometry": {"coordinates": [loi.lng, loi.lat]}, "id": loi.id})
+
+#with open("gwb.json", 'r') as f:
+#    betriebe = json.load(f)['features']
 
 def closest(lng, lat):
     return sorted(betriebe, key=lambda b: (b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat))[0]
@@ -51,6 +65,7 @@ class LessListener(StreamListener):
     def on_connect(self):
         me = self.me
         print "streaming as @%s (#%d)" % (me.screen_name, me.id)
+        self.api.update_status("Running live now.")
 
     def on_status(self, status):
         if status.place:
@@ -58,9 +73,13 @@ class LessListener(StreamListener):
             b = closest(lng, lat)
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
             if dist <= 0.005:
+                response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://www.nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
+                if not DEBUG:
+                    self.api.update_status(response, in_reply_to_status=status.id)
+                print response
                 print status.text
                 print status.place.bounding_box.origin()
-                print b['properties']['Betriebsname']
+                print b['name']
                 print dist
                 print
                 print
