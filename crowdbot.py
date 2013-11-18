@@ -64,8 +64,8 @@ class LessListener(StreamListener):
 
     def on_connect(self):
         me = self.me
-        print "streaming as @%s (#%d)" % (me.screen_name, me.id)
-        self.api.update_status("Running live now.")
+        print ("streaming as @%s (#%d)" % (me.screen_name, me.id)).encode('utf-8')
+        #self.api.update_status("Running live now.")
 
     def on_status(self, status):
         if status.place:
@@ -76,10 +76,10 @@ class LessListener(StreamListener):
                 response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://www.nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
                 if not DEBUG:
                     self.api.update_status(response, in_reply_to_status=status.id)
-                print response
-                print status.text
+                print response.encode('utf-8')
+                print status.text.encode('utf-8')
                 print status.place.bounding_box.origin()
-                print b['name']
+                print b['name'].encode('utf-8')
                 print dist
                 print
                 print
