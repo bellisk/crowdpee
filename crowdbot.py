@@ -23,7 +23,7 @@ tweet = QuestionnaireTweet.objects.get(questionnaire=questionnaire, language=Lan
 
 betriebe = []
 for loi in LocationOfInterest.objects.filter(campaign=questionnaire.campaign):
-    betriebe.append({"name": loi.name, "geometry": {"coordinates": [loi.lng, loi.lat]}, "id": loi.id})
+    betriebe.append({"name": loi.name, "geometry": {"coordinates": [loi.lng, loi.lat]}, "id": loi.id, "loi": loi})
 
 #with open("gwb.json", 'r') as f:
 #    betriebe = json.load(f)['features']
@@ -54,6 +54,13 @@ class Event(Model):
                 setattr(event, k, v)
         return event
 
+def twitter_request_already_exists(handle, questionnaire, location):
+    try:
+        TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire, location=location)
+        return True
+    except:
+        return False
+
 class LessListener(StreamListener):
     TIMEOUT = datetime.timedelta(seconds=300)
 
@@ -74,8 +81,9 @@ class LessListener(StreamListener):
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
             if dist <= 0.005:
                 response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://www.nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
-                if not DEBUG:
+                if not DEBUG and not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]):
                     self.api.update_status(response, in_reply_to_status=status.id)
+                    TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
                 print response.encode('utf-8')
                 print status.text.encode('utf-8')
                 print status.place.bounding_box.origin()
