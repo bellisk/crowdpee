@@ -76,21 +76,26 @@ class LessListener(StreamListener):
 
     def on_status(self, status):
         if status.place:
+            # if not following user, request to follow user
+            if not DEBUG and not self.api.exists_friendship(self, status.author.screen_name):
+                self.api.create_friendship(status.author.screen_name)
+                print "Requested to follow " + status.author.screen_name
             lng, lat = status.place.bounding_box.origin()
             b = closest(lng, lat)
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
             if dist <= 0.0009:
-                response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://www.nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en") 
-                if not DEBUG and not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]):
+                response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://www.nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
+                # if following user, send response
+                if not DEBUG and not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and self.api.exists_friendship(self, status.author.screen_name):
                     self.api.update_status(response, in_reply_to_status=status.id)
                     TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
-                print response.encode('utf-8')
-                print status.text.encode('utf-8')
-                print status.place.bounding_box.origin()
-                print b['name'].encode('utf-8')
-                print dist
-                print
-                print
+                    print response.encode('utf-8')
+            print status.text.encode('utf-8')
+            print status.place.bounding_box.origin()
+            print b['name'].encode('utf-8')
+            print dist
+            print
+            print
 
 if __name__ == '__main__':
     consumer_key = os.environ["CONSUMER_KEY"]
