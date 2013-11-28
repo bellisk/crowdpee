@@ -56,7 +56,7 @@ class Event(Model):
 
 def twitter_request_already_exists(handle, questionnaire, location):
     try:
-        TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire, location=location)
+        TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire, location=location) # remove location so only tweeting each *user* once
         return True
     except:
         return False
@@ -79,7 +79,7 @@ class LessListener(StreamListener):
             lng, lat = status.place.bounding_box.origin()
             b = closest(lng, lat)
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
-            if dist <= 0.005:
+            if dist <= 0.0009:
                 response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://www.nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
                 if not DEBUG and not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]):
                     self.api.update_status(response, in_reply_to_status=status.id)
