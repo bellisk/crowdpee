@@ -54,7 +54,7 @@ class Event(Model):
                 setattr(event, k, v)
         return event
 
-def twitter_request_already_exists(handle, questionnaire, location):
+def twitter_request_already_exists(handle, questionnaire):
     try:
         TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire) # removed location so only tweeting each *user* once
         return True
