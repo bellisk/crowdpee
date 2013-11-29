@@ -54,9 +54,12 @@ class Event(Model):
                 setattr(event, k, v)
         return event
 
-def twitter_request_already_exists(handle, questionnaire):
+def twitter_request_already_exists(handle, questionnaire, location=None):
     try:
-        TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire) # removed location so only tweeting each *user* once
+        if location:
+            TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire, location=location)
+        else:
+            TwitterRequest.objects.get(handle=handle, questionnaire=questionnaire)
         return True
     except:
         return False
@@ -90,7 +93,9 @@ class LessListener(StreamListener):
             if dist <= 0.0009:
                 response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
                 # if following user, send response
-                if not DEBUG and not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and friendships[0].following:
+                can_tweet_once = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and friendships[0].following
+                can_tweet_repeatedly = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b['loi']) and friendships[1].following
+                if not DEBUG and (can_tweet_once or can_tweet_repeatedly):
                     self.api.update_status(response, in_reply_to_status=status.id)
                     TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
                     print response.encode('utf-8')
