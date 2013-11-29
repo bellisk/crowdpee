@@ -82,8 +82,11 @@ class LessListener(StreamListener):
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
             friendships = self.api.show_friendship(source_screen_name=self.me.screen_name, target_screen_name=status.author.screen_name)
             if dist <= 0.09 and not DEBUG and not friendships[0].following:
-                self.api.create_friendship(screen_name=status.author.screen_name)
-                print "Requested to follow " + status.author.screen_name
+                try:
+                    self.api.create_friendship(screen_name=status.author.screen_name)
+                except:
+                    print "Blocked by " + status.author.screen_name.encode('utf-8')
+                print "Requested to follow " + status.author.screen_name.encode('utf-8')
             if dist <= 0.0009:
                 response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
                 # if following user, send response
