@@ -75,9 +75,9 @@ class LessListener(StreamListener):
         #self.api.update_status("Running live now.")
 
     def on_status(self, status):
-        if status.place:
+        if status.coordinates:
             # if not following user, request to follow user
-            lng, lat = status.place.bounding_box.origin()
+            lng, lat = status.coordinates['coordinates']
             b = closest(lng, lat)
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
             friendships = self.api.show_friendship(source_screen_name=self.me.screen_name, target_screen_name=status.author.screen_name)
@@ -92,7 +92,7 @@ class LessListener(StreamListener):
                     TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
                     print response.encode('utf-8')
             print status.text.encode('utf-8')
-            print status.place.bounding_box.origin()
+            print status.coordinates['coordinates']
             print b['name'].encode('utf-8')
             print dist
             print
