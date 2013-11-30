@@ -71,18 +71,18 @@ class LessListener(StreamListener):
         StreamListener.__init__(self, api)
         self.last = datetime.datetime.now() - self.TIMEOUT
         self.me = self.api.me()
-        self.last_action = None
+        self.cb_last_action = None
 
     def on_connect(self):
         me = self.me
         print ("streaming as @%s (#%d)" % (me.screen_name, me.id)).encode('utf-8')
         #self.api.update_status("Running live now.")
 
-    def ready_for_action(self):
-        return not self.last_action or datetime.datetime.now() - self.last_action > datetime.timedelta(hours=1)
+    def cb_ready_for_action(self):
+        return not self.cb_last_action or datetime.datetime.now() - self.cb_last_action > datetime.timedelta(hours=1)
 
-    def action_taken(self):
-        self.last_action = datetime.datetime.now()
+    def cb_action_taken(self):
+        self.cb_last_action = datetime.datetime.now()
 
     def on_status(self, status):
         if status.coordinates:
@@ -93,13 +93,13 @@ class LessListener(StreamListener):
             friendships = self.api.show_friendship(source_screen_name=self.me.screen_name, target_screen_name=status.author.screen_name)
             if dist <= 0.0009:
                 if not DEBUG and not friendships[0].following:
-                    if self.ready_for_action():
+                    if self.cb_ready_for_action():
                         try:
                             self.api.create_friendship(screen_name=status.author.screen_name)
                         except:
                             print "Blocked by " + status.author.screen_name.encode('utf-8')
                         print "Requested to follow " + status.author.screen_name.encode('utf-8')
-                        self.action_taken()
+                        self.cb_action_taken()
                     else:
                         print "Skipped following " + status.author.screen_name.encode('utf-8')
                 response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
@@ -107,10 +107,11 @@ class LessListener(StreamListener):
                 can_tweet_once = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and friendships[0].following
                 can_tweet_repeatedly = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b['loi']) and friendships[1].following
                 if not DEBUG and (can_tweet_once or can_tweet_repeatedly):
-                    if self.ready_for_action():
+                    if self.cb_ready_for_action():
                         self.api.update_status(response, in_reply_to_status=status.id)
                         TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
                         print response.encode('utf-8')
+                        self.cb_action_taken()
                     else:
                         print "Skipped tweeting: " + response.encode('utf-8') 
             print status.text.encode('utf-8')
