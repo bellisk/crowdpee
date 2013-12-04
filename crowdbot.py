@@ -1,5 +1,6 @@
 # coding=utf-8
 DEBUG = True
+METRES = 0.000009
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler, Stream, API
 from tweepy.utils import import_simplejson, parse_datetime
@@ -98,7 +99,7 @@ class LessListener(StreamListener):
             b = closest(lng, lat)
             dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
             friendships = self.api.show_friendship(source_screen_name=self.me.screen_name, target_screen_name=status.author.screen_name)
-            if dist <= 0.0009:
+            if dist <= 20 * METRES:
                 if not DEBUG and not friendships[0].following:
                     if self.cb_ready_for_follow():
                         try:
