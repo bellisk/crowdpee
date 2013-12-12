@@ -110,7 +110,7 @@ class LessListener(StreamListener):
                         self.cb_follow_made()
                     else:
                         print "Skipped following " + status.author.screen_name.encode('utf-8')
-                response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en")
+                response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en").replace("{{location}}", b["name"])
                 # if following user, send response
                 can_tweet_once = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and friendships[0].following
                 can_tweet_repeatedly = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b['loi']) and friendships[1].following
