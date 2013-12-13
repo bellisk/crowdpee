@@ -81,13 +81,13 @@ class LessListener(StreamListener):
         #self.api.update_status("Running live now.")
 
     def cb_ready_for_follow(self):
-        return not self.cb_last_follow or datetime.datetime.now() - self.cb_last_follow > datetime.timedelta(hours=3)
+        return not self.cb_last_follow or datetime.datetime.now() - self.cb_last_follow > datetime.timedelta(hours=12)
 
     def cb_follow_made(self):
         self.cb_last_follow = datetime.datetime.now()
 
     def cb_ready_for_tweet(self):
-        return not self.cb_last_tweet or datetime.datetime.now() - self.cb_last_tweet > datetime.timedelta(minutes=30)
+        return not self.cb_last_tweet or datetime.datetime.now() - self.cb_last_tweet > datetime.timedelta(minutes=60)
 
     def cb_tweet_made(self):
         self.cb_last_tweet = datetime.datetime.now()
