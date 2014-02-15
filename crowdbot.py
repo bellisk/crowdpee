@@ -93,43 +93,46 @@ class LessListener(StreamListener):
         self.cb_last_tweet = datetime.datetime.now()
 
     def on_status(self, status):
-        if status.coordinates:
-            # if not following user, request to follow user
-            lng, lat = status.coordinates['coordinates']
-            b = closest(lng, lat)
-            dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
-            friendships = self.api.show_friendship(source_screen_name=self.me.screen_name, target_screen_name=status.author.screen_name)
-            if dist <= 20 * METRES:
-                if not DEBUG and not friendships[0].following:
-                    if self.cb_ready_for_follow():
-                        try:
-                            self.api.create_friendship(screen_name=status.author.screen_name)
-                        except:
-                            print "Blocked by " + status.author.screen_name.encode('utf-8')
-                        print "Requested to follow " + status.author.screen_name.encode('utf-8')
-                        self.cb_follow_made()
-                    else:
-                        print "Skipped following " + status.author.screen_name.encode('utf-8')
-                response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en").replace("{{location}}", b["name"])
-                if len(response) > 140:
-                    print "Skipped response that would have been too long"
-                    return
-                # if following user, send response
-                can_tweet_once = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and friendships[0].following
-                can_tweet_repeatedly = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b['loi']) and friendships[1].following
-                if not DEBUG and (can_tweet_once or can_tweet_repeatedly):
-                    if self.cb_ready_for_tweet() or can_tweet_repeatedly:
-                        self.api.update_status(response, in_reply_to_status=status.id)
-                        TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
-                        print response.encode('utf-8')
-                        if not can_tweet_repeatedly:
-                            self.cb_tweet_made()
-                    else:
-                        print "Skipped tweeting: " + response.encode('utf-8') 
-            print status.text.encode('utf-8')
-            print status.coordinates['coordinates']
-            print b['name'].encode('utf-8')
-            print dist
+        try:
+            if status.coordinates:
+                # if not following user, request to follow user
+                lng, lat = status.coordinates['coordinates']
+                b = closest(lng, lat)
+                dist = ((b['geometry']['coordinates'][0] - lng) * (b['geometry']['coordinates'][0] - lng) + (b['geometry']['coordinates'][1] - lat) * (b['geometry']['coordinates'][1] - lat)) ** 0.5
+                friendships = self.api.show_friendship(source_screen_name=self.me.screen_name, target_screen_name=status.author.screen_name)
+                if dist <= 20 * METRES:
+                    if not DEBUG and not friendships[0].following:
+                        if self.cb_ready_for_follow():
+                            try:
+                                self.api.create_friendship(screen_name=status.author.screen_name)
+                            except:
+                                print "Blocked by " + status.author.screen_name.encode('utf-8')
+                            print "Requested to follow " + status.author.screen_name.encode('utf-8')
+                            self.cb_follow_made()
+                        else:
+                            print "Skipped following " + status.author.screen_name.encode('utf-8')
+                    response = "@" + status.author.screen_name + " " + tweet.replace("{{url}}", "http://nearbysources.com/q/" + str(questionnaire.id) + "/" + str(b["id"]) + "/en").replace("{{location}}", b["name"])
+                    if len(response) > 140:
+                        print "Skipped response that would have been too long"
+                        return
+                    # if following user, send response
+                    can_tweet_once = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire) and friendships[0].following
+                    can_tweet_repeatedly = not twitter_request_already_exists(handle=status.author.screen_name, questionnaire=questionnaire, location=b['loi']) and friendships[1].following
+                    if not DEBUG and (can_tweet_once or can_tweet_repeatedly):
+                        if self.cb_ready_for_tweet() or can_tweet_repeatedly:
+                            self.api.update_status(response, in_reply_to_status=status.id)
+                            TwitterRequest(handle=status.author.screen_name, questionnaire=questionnaire, location=b["loi"]).save()
+                            print response.encode('utf-8')
+                            if not can_tweet_repeatedly:
+                                self.cb_tweet_made()
+                        else:
+                            print "Skipped tweeting: " + response.encode('utf-8') 
+                print status.text.encode('utf-8')
+                print status.coordinates['coordinates']
+                print b['name'].encode('utf-8')
+                print dist
+            except Exception as exc:
+                print "Exception: ", str(exc)
             print
             print
 
