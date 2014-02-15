@@ -131,10 +131,10 @@ class LessListener(StreamListener):
                 print status.coordinates['coordinates']
                 print b['name'].encode('utf-8')
                 print dist
-            except Exception as exc:
-                print "Exception: ", str(exc)
-            print
-            print
+        except Exception as exc:
+            print "Exception: ", str(exc)
+        print
+        print
 
 if __name__ == '__main__':
     consumer_key = os.environ["CONSUMER_KEY"]
