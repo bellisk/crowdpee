@@ -9,7 +9,7 @@ import_simplejson()
 import argparse
 import os
 import itertools
-import datetime
+import datetime, time
 from django.core.management import setup_environ
 import nearbysources.settings as settings
 import sys, json
@@ -137,18 +137,23 @@ class LessListener(StreamListener):
         print
 
 if __name__ == '__main__':
-    consumer_key = os.environ["CONSUMER_KEY"]
-    consumer_secret = os.environ["CONSUMER_SECRET"]
+    while True:
+        try:
+            consumer_key = os.environ["CONSUMER_KEY"]
+            consumer_secret = os.environ["CONSUMER_SECRET"]
 
-    access_token = os.environ["ACCESS_TOKEN"]
-    access_token_secret = os.environ["ACCESS_TOKEN_SECRET"]
+            access_token = os.environ["ACCESS_TOKEN"]
+            access_token_secret = os.environ["ACCESS_TOKEN_SECRET"]
 
-    auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
+            auth = OAuthHandler(consumer_key, consumer_secret)
+            auth.set_access_token(access_token, access_token_secret)
 
-    api = API(auth)
-    l = LessListener(api)
+            api = API(auth)
+            l = LessListener(api)
 
-    stream = Stream(auth, l)
-    # CH: [5.47, 45.37, 10.65, 47.96]
-    stream.filter(locations=[8.41, 47.31, 8.62, 47.48])
+            stream = Stream(auth, l)
+            # CH: [5.47, 45.37, 10.65, 47.96]
+            stream.filter(locations=[8.41, 47.31, 8.62, 47.48])
+        except Exception as e:
+            print e
+            time.sleep(300)
