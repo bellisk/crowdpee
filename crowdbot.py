@@ -7,17 +7,16 @@ import argparse
 import os
 import itertools
 import datetime, time
-from django.core.management import setup_environ
+# from django.core.management import setup_environ
 import nearbysources.settings as settings
 import sys, json
 
 if __name__ == "__main__":
-    setup_environ(settings)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "nearbysources.settings")
 
 from nearbysources.questions.models import *
 
 DEBUG = True
-METRES = 0.000009
 
 questionnaire = Questionnaire.objects.get(name=sys.argv[1])
 tweet = QuestionnaireTweet.objects.get(questionnaire=questionnaire, language=Language.objects.get(code="en")).text
@@ -47,3 +46,19 @@ if __name__ == '__main__':
     auth.set_access_token(access_token, access_token_secret)
 
     api = API(auth)
+    found_tweets = set()
+    betriebe_index = 0
+
+    while True:
+        for x in range(100):
+            try:
+                search_str = betriebe[betriebe_index]["name"].split(",")[0] + " zurich"
+                for tweet in api.search(q=search_str, result_type="recent"):
+                    if not tweet.text in found_tweets:
+                        print datetime.datetime.now()
+                        print tweet.text
+                        found_tweets.add(tweet.text)
+            except Exception as e:
+                print e
+            betriebe_index = (betriebe_index + 1) % len(betriebe)
+        time.sleep(15 * 60)
