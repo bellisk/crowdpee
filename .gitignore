@@ -4,3 +4,5 @@ env.sh
 include
 lib
 /nearbysources
+db.sqlite
+/local
